@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Visitor - VMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0c1222;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #e2e8f0;
+    }
+
+    .container {
+      max-width: 460px;
+      width: 100%;
+    }
+
+    /* Loading */
+    .loader-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(99, 102, 241, 0.2);
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-wrapper p {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    /* Card */
+    .card {
+      background: #151d2e;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #1d3557 0%, #2a4a7f 100%);
+      padding: 28px 28px;
+      text-align: center;
+    }
+
+    .card-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+
+    .card-header p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 6px;
+    }
+
+    .card-body {
+      padding: 28px 24px;
+    }
+
+    /* Visitor Photo */
+    .visitor-photo-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .visitor-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      background: #1e293b;
+    }
+
+    .visitor-photo-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1d3557, #2a4a7f);
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Info Grid */
+    .info-grid {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .info-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e2e8f0;
+      text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.pending {
+      background: rgba(251, 191, 36, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .status-badge.verified {
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .status-badge.rejected {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .status-badge.pending .status-dot { background: #fbbf24; animation: pulse 2s ease-in-out infinite; }
+    .status-badge.verified .status-dot { background: #4ade80; }
+    .status-badge.rejected .status-dot { background: #f87171; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 0 4px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-approve {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-approve:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-reject {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-reject:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.18);
+      transform: translateY(-2px);
+    }
+
+    /* Result Message */
+    .result-message {
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-weight: 500;
+      font-size: 14px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .result-message.success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #4ade80;
+    }
+
+    .result-message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .result-message.rejected-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Error State */
+    .error-state {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .error-state .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .error-state h2 {
+      font-size: 18px;
+      color: #f87171;
+      margin-bottom: 8px;
+    }
+
+    .error-state p {
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    /* Already Verified */
+    .already-verified {
+      text-align: center;
+      padding: 20px;
+      margin-top: 8px;
+    }
+
+    .already-verified .check-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.1);
+      border: 2px solid rgba(34, 197, 94, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .already-verified h3 {
+      color: #4ade80;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .already-verified p {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    /* Timestamp */
+    .timestamp {
+      text-align: center;
+      color: #475569;
+      font-size: 12px;
+      padding: 0 24px 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .card-header { padding: 22px 16px; }
+      .card-body { padding: 20px 16px; }
+      .info-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; }
+      .info-value { text-align: left; max-width: 100%; }
+      .btn-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Loading -->
+    <div class="card" id="loading-state">
+      <div class="card-header">
+        <h1>Visitor Verification</h1>
+        <p>Loading visitor details...</p>
+      </div>
+      <div class="card-body">
+        <div class="loader-wrapper">
+          <div class="spinner"></div>
+          <p>Fetching visitor information</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="card" id="error-state" style="display:none;">
+      <div class="card-header">
+        <h1>Visitor Verification</h1>
+        <p>Something went wrong</p>
+      </div>
+      <div class="card-body">
+        <div class="error-state">
+          <div class="error-icon">⚠️</div>
+          <h2 id="error-title">Visitor Not Found</h2>
+          <p id="error-text">The visitor record could not be found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visitor Details -->
+    <div class="card" id="visitor-state" style="display:none;">
+      <div class="card-header">
+        <h1>Visitor Verification</h1>
+        <p>Review and approve this visitor's entry</p>
+      </div>
+      <div class="card-body">
+        <!-- Photo -->
+        <div class="visitor-photo-wrapper">
+          <img id="visitor-photo" class="visitor-photo" style="display:none;" alt="Visitor Photo" />
+          <div id="visitor-photo-placeholder" class="visitor-photo-placeholder"></div>
+        </div>
+
+        <!-- Info -->
+        <div class="info-grid">
+          <div class="info-row">
+            <span class="info-label">Visitor ID</span>
+            <span class="info-value" id="v-id">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Name</span>
+            <span class="info-value" id="v-name">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone</span>
+            <span class="info-value" id="v-phone">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value" id="v-email">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Whom to Meet</span>
+            <span class="info-value" id="v-whom">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Purpose</span>
+            <span class="info-value" id="v-purpose">—</span>
+          </div>
+          <div class="info-row" id="row-company" style="display:none;">
+            <span class="info-label">Company</span>
+            <span class="info-value" id="v-company">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Status</span>
+            <span class="info-value" id="v-status">
+              <span class="status-badge pending">
+                <span class="status-dot"></span>
+                Pending
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Already verified message -->
+        <div id="already-verified" class="already-verified" style="display:none;">
+          <div class="check-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#4ade80">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+          <h3>Already Verified</h3>
+          <p>This visitor has already been verified.</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group" id="action-buttons">
+          <button class="btn btn-approve" id="btn-approve" onclick="approveVisitor()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            Approve
+          </button>
+          <button class="btn btn-reject" id="btn-reject" onclick="rejectVisitor()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            Reject
+          </button>
+        </div>
+
+        <!-- Result message -->
+        <div id="result-message" class="result-message" style="display:none;"></div>
+      </div>
+
+      <div class="timestamp" id="timestamp"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = window.location.origin;
+    let visitorId = null;
+
+    function getVisitorId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    async function loadVisitor() {
+      visitorId = getVisitorId();
+
+      if (!visitorId) {
+        showError('Invalid Link', 'No visitor ID was provided in the URL.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BASE_URL}/api/v1/visitors/verify-details/${visitorId}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError('Visitor Not Found', data.message || 'Could not fetch visitor details.');
+          return;
+        }
+
+        displayVisitor(data.data);
+      } catch (err) {
+        showError('Network Error', 'Failed to connect to the server. Please try again later.');
+      }
+    }
+
+    function displayVisitor(v) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('visitor-state').style.display = 'block';
+
+      document.getElementById('v-id').textContent = '#' + v.visitor_id;
+      document.getElementById('v-name').textContent = `${v.first_name || ''} ${v.last_name || ''}`.trim() || '—';
+      document.getElementById('v-email').textContent = v.email || '—';
+      document.getElementById('v-phone').textContent = v.phone || '—';
+      document.getElementById('v-whom').textContent = v.employee_name || v.whom_to_meet || '—';
+      document.getElementById('v-purpose').textContent = v.purpose_text || v.purpose || '—';
+
+      if (v.visitor_company_name) {
+        document.getElementById('v-company').textContent = v.visitor_company_name;
+        document.getElementById('row-company').style.display = 'flex';
+      }
+
+      // Photo
+      if (v.image) {
+        const img = document.getElementById('visitor-photo');
+        img.src = v.image;
+        img.style.display = 'block';
+        document.getElementById('visitor-photo-placeholder').style.display = 'none';
+      } else {
+        const initial = (v.first_name?.[0] || '?').toUpperCase();
+        document.getElementById('visitor-photo-placeholder').textContent = initial;
+      }
+
+      // Timestamp
+      if (v.created_at) {
+        const date = new Date(v.created_at);
+        document.getElementById('timestamp').textContent =
+          'Submitted ' + date.toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+          });
+      }
+
+      // Status
+      if (v.is_verified == 1) {
+        setStatusBadge('verified', 'Verified');
+        document.getElementById('action-buttons').style.display = 'none';
+        document.getElementById('already-verified').style.display = 'block';
+      } else if (v.is_verified == 2) {
+        setStatusBadge('rejected', 'Rejected');
+        document.getElementById('action-buttons').style.display = 'none';
+        showResult('This visitor has been rejected.', 'rejected-msg');
+      } else {
+        setStatusBadge('pending', 'Pending Verification');
+      }
+    }
+
+    function setStatusBadge(type, text) {
+      document.getElementById('v-status').innerHTML = `
+        <span class="status-badge ${type}">
+          <span class="status-dot"></span>
+          ${text}
+        </span>
+      `;
+    }
+
+    async function approveVisitor() {
+      const btn = document.getElementById('btn-approve');
+      const btnReject = document.getElementById('btn-reject');
+      btn.disabled = true;
+      btnReject.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Approving...';
+
+      try {
+        const res = await fetch(`${BASE_URL}/api/v1/visitors/approve/${visitorId}`, { method: 'PUT' });
+        const data = await res.json();
+
+        if (res.ok) {
+          setStatusBadge('verified', 'Verified');
+          document.getElementById('action-buttons').style.display = 'none';
+          showResult('✓ Visitor approved successfully! QR code generated.', 'success');
+        } else {
+          showResult(data.message || 'Failed to approve visitor.', 'error');
+          resetBtn(btn, btnReject, 'approve');
+        }
+      } catch (err) {
+        showResult('Network error. Please try again.', 'error');
+        resetBtn(btn, btnReject, 'approve');
+      }
+    }
+
+    async function rejectVisitor() {
+      if (!confirm('Are you sure you want to reject this visitor?')) return;
+
+      const btn = document.getElementById('btn-reject');
+      const btnApprove = document.getElementById('btn-approve');
+      btn.disabled = true;
+      btnApprove.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;border-top-color:#f87171;"></div> Rejecting...';
+
+      try {
+        const res = await fetch(`${BASE_URL}/api/v1/visitors/reject/${visitorId}`, { method: 'PUT' });
+        const data = await res.json();
+
+        if (res.ok) {
+          setStatusBadge('rejected', 'Rejected');
+          document.getElementById('action-buttons').style.display = 'none';
+          showResult('Visitor has been rejected.', 'rejected-msg');
+        } else {
+          showResult(data.message || 'Failed to reject visitor.', 'error');
+          resetBtn(btnApprove, btn, 'reject');
+        }
+      } catch (err) {
+        showResult('Network error. Please try again.', 'error');
+        resetBtn(btnApprove, btn, 'reject');
+      }
+    }
+
+    function resetBtn(btn1, btn2, type) {
+      btn1.disabled = false;
+      btn2.disabled = false;
+      if (type === 'approve') {
+        btn1.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Approve';
+      } else {
+        btn2.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Reject';
+      }
+    }
+
+    function showResult(message, type) {
+      const el = document.getElementById('result-message');
+      el.className = `result-message ${type}`;
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function showError(title, text) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'block';
+      document.getElementById('error-title').textContent = title;
+      document.getElementById('error-text').textContent = text;
+    }
+
+    loadVisitor();
+  </script>
+</body>
+</html>
