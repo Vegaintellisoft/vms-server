@@ -60,15 +60,16 @@ app.use(
 
 // CORS - Configure allowed origins
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(",").map(s => s.trim())
-    : [
-        "http://localhost:3000",
-        "http://localhost:4200",
-        "http://localhost:5173",
-        "https://localhost:5173",
-      ],
-  credentials: true, // Allow cookies
+  // origin: process.env.CORS_ORIGIN
+  //   ? process.env.CORS_ORIGIN.split(",").map(s => s.trim())
+  //   : [
+  //       "http://localhost:3000",
+  //       "http://localhost:4200",
+  //       "http://localhost:5173",
+  //       "https://localhost:5173",
+  //     ],
+  origin : "*",
+  // credentials: true, // Allow cookies
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
