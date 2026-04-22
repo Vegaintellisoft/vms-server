@@ -40,7 +40,7 @@ FROM employees e
 JOIN roles r ON e.role_id = r.role_id
 JOIN companies c ON e.company_id = c.company_id
 WHERE e.status = 'Active'
-  AND r.role_name = 'Company Admin';
+  AND r.role_name = 'Admin';
 `;
 
 

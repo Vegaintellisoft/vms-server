@@ -20,7 +20,6 @@ async function runSeed() {
       'role_permissions',
       'appointment_scheduling',
       'otp_verifications',
-      'otp_verification',
       'otps',
       'visitors',
       'temp_visitors',
@@ -101,14 +100,14 @@ async function runSeed() {
     console.log('✓ Inserted 25 permissions');
 
     // ──────────────────────────────────────────
-    // STEP 4: Seed Roles
+    // STEP 4: Seed Roles (matches migration SQL)
     // ──────────────────────────────────────────
     const rolesData = [
-      ['Building Admin', 'Active', 1],   // role_id = 1  (Super Admin - manages entire building)
-      ['Company Admin', 'Active', 1],     // role_id = 2  (Admin of one company)
-      ['Receptionist', 'Active', 1],      // role_id = 3  (Front desk)
-      ['Security', 'Active', 1],          // role_id = 4  (Gate security)
-      ['Employee', 'Active', 1],          // role_id = 5  (Regular employee - view only)
+      ['Super Admin', 'Active', 1],   // role_id = 1  (Full system access)
+      ['Admin', 'Active', 1],         // role_id = 2  (Company-level admin)
+      ['Receptionist', 'Active', 1],  // role_id = 3  (Front desk)
+      ['Security', 'Active', 1],      // role_id = 4  (Gate security)
+      ['Viewer', 'Active', 1],        // role_id = 5  (View-only access)
     ];
     await db.query('INSERT INTO roles (role_name, status, visibility) VALUES ?', [rolesData]);
     console.log('✓ Inserted 5 roles');
@@ -117,15 +116,15 @@ async function runSeed() {
     // STEP 5: Assign Permissions to Roles
     // ──────────────────────────────────────────
     const rolePermissions = {
-      // Building Admin → ALL permissions
+      // Super Admin → ALL permissions
       1: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25],
-      // Company Admin → All except Delete Employee and Role Management Delete
+      // Admin → All except Delete Employee (15) and Delete Role (23)
       2: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,24,25],
       // Receptionist → Dashboard, Visitors, Appointments (View + Create + Check-out)
       3: [1,3,4,5,7,8,9],
       // Security → Dashboard, View Visitors, Check-out
       4: [1,3,7],
-      // Employee → Dashboard, View Visitors, View Appointments
+      // Viewer → Dashboard, View Visitors, View Appointments
       5: [1,3,8],
     };
 
@@ -193,75 +192,6 @@ async function runSeed() {
     console.log('✓ Inserted 7 designations');
 
     // ──────────────────────────────────────────
-    // STEP 10: Create Default Employee Accounts
-    // ──────────────────────────────────────────
-    const defaultPassword = 'admin123';
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-
-    const defaultAccounts = [
-      {
-        first_name: 'System', last_name: 'Admin',
-        email: 'admin@vegaintellisoft.com', phone: '0000000000',
-        gender: 'Male',
-        company_id: 1, department_id: 1, designation_id: 1,
-        role_id: 1, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Building Admin — Full access'
-      },
-      {
-        first_name: 'Company', last_name: 'Admin',
-        email: 'companyadmin@vegaintellisoft.com', phone: '1111111111',
-        gender: 'Male',
-        company_id: 1, department_id: 1, designation_id: 2,
-        role_id: 2, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Company Admin — Manages one company'
-      },
-      {
-        first_name: 'Front', last_name: 'Desk',
-        email: 'receptionist@vegaintellisoft.com', phone: '2222222222',
-        gender: 'Female',
-        company_id: 1, department_id: 1, designation_id: 2,
-        role_id: 3, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Receptionist — Visitor check-in/out'
-      },
-      {
-        first_name: 'Campus', last_name: 'Security',
-        email: 'security@vegaintellisoft.com', phone: '3333333333',
-        gender: 'Male',
-        company_id: 1, department_id: 1, designation_id: 2,
-        role_id: 4, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Security — QR scan and gate access'
-      },
-      {
-        first_name: 'Staff', last_name: 'Member',
-        email: 'employee@vegaintellisoft.com', phone: '4444444444',
-        gender: 'Male',
-        company_id: 1, department_id: 2, designation_id: 3,
-        role_id: 5, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Employee — View-only access'
-      },
-      {
-        first_name: 'Rajesh', last_name: 'S',
-        email: 'rajesh@vegaintellisoft.com', phone: '9585847721',
-        gender: 'Male',
-        company_id: 1, department_id: 2, designation_id: 4,
-        role_id: 2, status: 'Active',
-        password: hashedPassword,
-        remarks: 'Sample employee'
-      },
-    ];
-
-    for (const acc of defaultAccounts) {
-      await db.query('INSERT INTO employees SET ?', acc);
-    }
-
-    console.log('✓ Created 6 default employee accounts');
-
-    // ──────────────────────────────────────────
     // RE-ENABLE & FINISH
     // ──────────────────────────────────────────
     await db.query('SET FOREIGN_KEY_CHECKS = 1;');
@@ -271,17 +201,6 @@ async function runSeed() {
     console.log('╔══════════════════════════════════════════╗');
     console.log('║   ✅ Database Seeding Complete!          ║');
     console.log('╚══════════════════════════════════════════╝');
-    console.log('');
-    console.log('Default Login Accounts (password: admin123):');
-    console.log('┌────────────────────────────────────────────────────────┐');
-    console.log('│ Role              │ Email                             │');
-    console.log('├────────────────────────────────────────────────────────┤');
-    console.log('│ Building Admin    │ admin@vegaintellisoft.com          │');
-    console.log('│ Company Admin     │ companyadmin@vegaintellisoft.com   │');
-    console.log('│ Receptionist      │ receptionist@vegaintellisoft.com   │');
-    console.log('│ Security          │ security@vegaintellisoft.com       │');
-    console.log('│ Employee          │ employee@vegaintellisoft.com       │');
-    console.log('└────────────────────────────────────────────────────────┘');
     console.log('');
 
   } catch (error) {
